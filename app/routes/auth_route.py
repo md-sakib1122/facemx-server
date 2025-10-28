@@ -11,6 +11,7 @@ from app.utils.role_guard import require_role
 from app.services.user.get_all_employee_by_companyId import get_all_employee_by_company_id
 from app.core.databse import db
 from app.services.user.get_single_user_service import get_user_by_id
+from app.services.user.company.delete_department_service import delete_department_service
 router = APIRouter(tags=["auth"])
 
 @router.post("/signup")  # group signup
@@ -49,7 +50,7 @@ async def add_company(company: UserCreate):
 @router.post("/create-employee")  # company signup
 async def add_employee(employee: UserCreate):
     try:
-
+        print("employee->>", employee.model_dump())
         emp_id = await create_user(employee.model_dump())
         return {"message": "Employee created successfully", "id": emp_id}
     except Exception as e:
@@ -96,6 +97,17 @@ async def add_subdepartment(data: SubDepartmentUpdate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.patch("/company/delete-department")
+async def delete_department(payload: dict):
+    data = payload.get("payload")
+    if not data:
+        return {"error": "Invalid request structure. Expected { payload: {...} }"}
+
+    company_id = data["id"]
+    filtered_dept = data["filteredDept"]
+
+    return await delete_department_service( company_id, filtered_dept)
 
 
 @router.get("/all-company")

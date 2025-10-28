@@ -6,7 +6,7 @@ from app.auth.password_utils import hash_password
 async def create_user(data: dict):
     collection = db["users"]
     hashed_pw = hash_password(data["password"])
-
+    print("create user data",data)
     # check if email already exists
     existing_user = await collection.find_one({"email": data["email"]})
     if existing_user:
@@ -49,8 +49,8 @@ async def create_user(data: dict):
             "company_id": data.get("company_id"),
             "emp_id": data.get("emp_id"),
             "group_id": data.get("group_id"),
-            "userSubDept" :None,
-            "userDept":None,
+            "userSubDept" :data.get("userSubDept"),
+            "userDept":data.get("userDept"),
             "createdAt": datetime.utcnow(),
             "updatedAt": datetime.utcnow(),
         }

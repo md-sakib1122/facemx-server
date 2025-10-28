@@ -19,6 +19,8 @@ async def get_all_employee_by_company_id(company_id: str):
             "company_id": doc.get("company_id"),
             "emp_id": doc.get("emp_id"),
             "group_id": doc.get("group_id"),
+            "userDept": doc.get("userDept"),
+            "userSubDept": doc.get("userSubDept"),
         })
 
     return employees
