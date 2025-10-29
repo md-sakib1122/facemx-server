@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Response,Depends,Body
-from app.models.userModel import UserCreate , AddDepartmentModel , SubDepartmentUpdate
+from fastapi import APIRouter, HTTPException, Response, Depends, Body, status, BackgroundTasks, Query
+from app.models.userModel import UserCreate, AddDepartmentModel, SubDepartmentUpdate
 from bson import ObjectId
 from app.services.user.user_service import create_user
 from app.models.signInModel import SignInModel
 from app.services.user.sign_in_service import sign_in_user
 from app.services.user.sign_out_service import sign_out_user
-from app.services.user.get_all_company import get_all_companies_by_parent,get_single_company
+from app.services.user.get_all_company import get_all_companies_by_parent, get_single_company
 from app.utils.role_guard import get_current_user
 from app.utils.role_guard import require_role
 from app.services.user.get_all_employee_by_companyId import get_all_employee_by_company_id
@@ -13,23 +13,74 @@ from app.core.databse import db
 from app.services.user.get_single_user_service import get_user_by_id
 from app.services.user.company.delete_department_service import delete_department_service
 from app.services.user.company.delete_subdepartment_service import delete_subdepartment_service
+from app.auth.email_token import send_verification_email ,confirm_verification_token
 router = APIRouter(tags=["auth"])
 
+
 @router.post("/signup")  # group signup
-async def add_group(user: UserCreate):
+async def add_user(user: UserCreate,background_tasks: BackgroundTasks):
     try:
-        user_id = await create_user(user.model_dump())
-        return {"message": "group created successfully", "id": user_id}
+        data = user.model_dump()
+        collection = db["users"]
+        existing_user = await collection.find_one({"email": data["email"]})
+        if existing_user:
+           if existing_user["is_verified"]:
+             raise HTTPException(
+                 status_code=status.HTTP_400_BAD_REQUEST,
+                 detail="Email already registered"
+              )
+           else:
+              await send_verification_email(background_tasks,data["email"])
+              return{"message": "Email Already Exist but not verified. Verification email sent!"}
+        user_id = await create_user(data)
+        await send_verification_email(background_tasks, data["email"])
+        return {"message": "Signup Successful,Please verify your email!", "id": user_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/verify-email")
+async def verify_email(token: str = Query(...)):
+    try:
+        email = confirm_verification_token(token)
+        collection = db["users"]
+        user = await collection.find_one({"email": email})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if user["is_verified"]:
+            return {"message": "Email already verified!"}
+
+        await collection.update_one(
+            {"email": email},
+            {"$set": {"is_verified": True}}
+        )
+        return {"message": "Email verification successful!"}
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/signin")
 async def sign_in(data: SignInModel, response: Response):
-    print("hit korche",data)
     try:
-        result = await sign_in_user(data.model_dump(),response)
+        # Step 1: Find the user by email
+        user = await db["users"].find_one({"email": data.email})
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Step 2: Check email verification
+        if not user.get("is_verified", False):
+            raise HTTPException(
+                status_code=403,
+                detail="Please verify your email before logging in."
+            )
+
+        # Step 3: Call your existing login logic
+        result = await sign_in_user(data.model_dump(), response)
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -37,25 +88,6 @@ async def sign_in(data: SignInModel, response: Response):
 @router.post("/sign_out")
 async def sign_out(response: Response):
     return await sign_out_user(response)
-
-@router.post("/create-company")  # company signup
-async def add_company(company: UserCreate):
-    try:
-        print("company->>", company)
-        company_id = await create_user(company.model_dump())
-        return {"message": "company created successfully", "id": company_id}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/create-employee")  # company signup
-async def add_employee(employee: UserCreate):
-    try:
-        print("employee->>", employee.model_dump())
-        emp_id = await create_user(employee.model_dump())
-        return {"message": "Employee created successfully", "id": emp_id}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Route to add a new department
@@ -77,7 +109,6 @@ async def add_department(data: AddDepartmentModel):
         return {"message": "department added successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.patch("/company/add-subdepartment")
@@ -108,7 +139,7 @@ async def delete_department(payload: dict):
     company_id = data["id"]
     filtered_dept = data["filteredDept"]
 
-    return await delete_department_service( company_id, filtered_dept)
+    return await delete_department_service(company_id, filtered_dept)
 
 
 @router.patch("/company/delete-subdepartment")
@@ -120,11 +151,11 @@ async def delete_subdepartment(payload: dict):
     company_id = data["id"]
     filtered_subdept = data["filteredSubDept"]
 
-    return await delete_subdepartment_service( company_id, filtered_subdept)
+    return await delete_subdepartment_service(company_id, filtered_subdept)
 
 
 @router.get("/all-company")
-async def get_all_company(user=Depends(require_role(["group","company"]))):
+async def get_all_company(user=Depends(require_role(["group", "company"]))):
     try:
         parent_id = user["user_id"]
         print("parent_id>>", parent_id)
@@ -141,7 +172,7 @@ async def get_all_company(user=Depends(require_role(["group","company"]))):
 
 @router.post("/all-employee")
 async def get_all_employee(
-    data: dict = Body(...),
+        data: dict = Body(...),
 ):
     try:
         company_id = data.get("company_id")
@@ -161,10 +192,9 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "role": current_user["role"]
     }
 
+
 @router.get("/single-user")
 async def get_single_user(user_id: str):
     print(user_id)
-    user =await get_user_by_id(user_id)
+    user = await get_user_by_id(user_id)
     return user
-
-

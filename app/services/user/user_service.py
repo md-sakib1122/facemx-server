@@ -7,14 +7,6 @@ async def create_user(data: dict):
     collection = db["users"]
     hashed_pw = hash_password(data["password"])
     print("create user data",data)
-    # check if email already exists
-    existing_user = await collection.find_one({"email": data["email"]})
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-
     document = {}
 
     if data["role"] in ["group", "company"]:
@@ -23,6 +15,7 @@ async def create_user(data: dict):
             "email": data["email"],
             "password": hashed_pw,
             "role": data["role"],
+            "is_verified":False,
             #company
             "parent": data.get("parent"),
             "department": [],
@@ -45,6 +38,7 @@ async def create_user(data: dict):
             "name": data["name"],
             "email": data["email"],
             "password": hashed_pw,
+            "is_verified": False,
             "role": data["role"],
             "company_id": data.get("company_id"),
             "emp_id": data.get("emp_id"),
