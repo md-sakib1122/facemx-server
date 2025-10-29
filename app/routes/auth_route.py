@@ -12,6 +12,7 @@ from app.services.user.get_all_employee_by_companyId import get_all_employee_by_
 from app.core.databse import db
 from app.services.user.get_single_user_service import get_user_by_id
 from app.services.user.company.delete_department_service import delete_department_service
+from app.services.user.company.delete_subdepartment_service import delete_subdepartment_service
 router = APIRouter(tags=["auth"])
 
 @router.post("/signup")  # group signup
@@ -108,6 +109,18 @@ async def delete_department(payload: dict):
     filtered_dept = data["filteredDept"]
 
     return await delete_department_service( company_id, filtered_dept)
+
+
+@router.patch("/company/delete-subdepartment")
+async def delete_subdepartment(payload: dict):
+    data = payload.get("payload")
+    if not data:
+        return {"error": "Invalid request structure. Expected { payload: {...} }"}
+
+    company_id = data["id"]
+    filtered_subdept = data["filteredSubDept"]
+
+    return await delete_subdepartment_service( company_id, filtered_subdept)
 
 
 @router.get("/all-company")
