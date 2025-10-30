@@ -2,7 +2,7 @@ import datetime
 from app.core.databse import db
 from typing import List, Dict
 
-async def get_attendance(emp_id: str, start_date: datetime.date, end_date: datetime.date) -> List[Dict]:
+async def get_attendance(emp_id: str,company_id:str, start_date: datetime.date, end_date: datetime.date) -> List[Dict]:
     """
     Returns a list of attendance records per day for an employee
     Each record contains: date, entry_time, exit_time, status (present/absent)
@@ -18,6 +18,7 @@ async def get_attendance(emp_id: str, start_date: datetime.date, end_date: datet
         # fetch all records for this day
         records = await db["tracks"].find({
             "emp_id": emp_id,
+            "company_id":company_id,
             "timestamp": {"$gte": start_dt, "$lte": end_dt}
         }).to_list(1000)  # adjust max as needed
 

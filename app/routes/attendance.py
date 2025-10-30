@@ -10,7 +10,8 @@ router = APIRouter(tags=["attendance"])
 async def track_and_save(data:dict):
     try:
       emp_id = data["emp_id"]
-      result = await save_tracking(emp_id, data["match_score"])
+      company_id = data["company_id"]
+      result = await save_tracking(emp_id, data["match_score"],company_id)
       return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -22,6 +23,6 @@ async def attendance_report(req: AttendanceRequest):
     start = datetime.datetime.strptime(req.start_date, "%Y-%m-%d").date()
     end = datetime.datetime.strptime(req.end_date, "%Y-%m-%d").date()
     print("emp id:",req.emp_id)
-    data = await get_attendance(req.emp_id, start, end)
+    data = await get_attendance(req.emp_id,req.company_id, start, end)
     print("returned data",data)
     return data
