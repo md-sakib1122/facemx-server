@@ -45,6 +45,8 @@ async def create_user(data: dict):
             "group_id": data.get("group_id"),
             "userSubDept" :data.get("userSubDept"),
             "userDept":data.get("userDept"),
+            "lon": data.get("lon"),
+            "lat": data.get("lat"),
             "createdAt": datetime.utcnow(),
             "updatedAt": datetime.utcnow(),
         }

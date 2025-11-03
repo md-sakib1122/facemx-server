@@ -25,6 +25,8 @@ class UserBase(BaseModel):
     emp_id: Optional[str] = None
     group_id: Optional[str] = None
     company_id: Optional[str] = None
+    lat: Optional[str] = None
+    lon: Optional[str] = None
     #emp base info
 
 class UserCreate(UserBase):

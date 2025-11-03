@@ -25,11 +25,13 @@ async def one_one(img1: UploadFile = File(...), img2: UploadFile = File(...)):
     result = await one_to_one(img1, img2)
     return result
 
+
 @router.post("/save-embed")
 async def save_embed(img1: UploadFile = File(...), file_path: str = Form(...),emp_id: str = Form(...),notes: str = Form(...), company_id :str = Form(...)):
     result = await get_face_embedding(img1)
     await  save_embedding(result,file_path,emp_id,notes,company_id)
     return {"message": "Embedding saved successfully"}
+
 
 
 @router.post("/one-to-n")
