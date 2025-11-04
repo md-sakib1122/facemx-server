@@ -186,15 +186,10 @@ async def get_all_employee(
 
 @router.get("/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
-    return {
-        "id": current_user["user_id"],
-        "email": current_user["email"],
-        "role": current_user["role"]
-    }
+    return await get_user_by_id(current_user["user_id"])
 
 
 @router.get("/single-user")
 async def get_single_user(user_id: str):
-    print(user_id)
     user = await get_user_by_id(user_id)
     return user

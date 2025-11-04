@@ -11,7 +11,7 @@ async def track_and_save(data:dict):
     try:
       emp_id = data["emp_id"]
       company_id = data["company_id"]
-      result = await save_tracking(emp_id, data["match_score"],company_id)
+      result = await save_tracking(emp_id, data["match_score"],company_id, data["current_lat"], data["current_lon"] , data["dist"])
       return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

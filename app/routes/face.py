@@ -42,13 +42,22 @@ async def one_to_n_route(img1: UploadFile = File(...),company_id: str = Form(...
 
 
 
-@router.delete("/{user_id}")
-async def delete_embedding(user_id: str):
-    deleted = await delete_embedding_by_id(user_id)
-    if deleted:
-        return {"success": True, "message": f"Embedding with ID '{user_id}' deleted successfully."}
-    else:
-        raise HTTPException(status_code=404, detail=f"No embedding found with ID '{user_id}'")
+@router.delete("/delete-embed")
+async def delete_embedding(data: dict):
+    try:
+        print("data", data)
+        user_id = data["emp_id"]
+        company_id = data["company_id"]
+        deleted = await delete_embedding_by_id(user_id, company_id)
+        if deleted:
+            return {"success": True, "message": f"Embedding for employee '{user_id}' deleted successfully."}
+        else:
+            raise HTTPException(status_code=404, detail=f"No embedding found for employee '{user_id}'")
+    except KeyError:
+        raise HTTPException(status_code=400, detail="Missing required fields: emp_id and company_id")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 

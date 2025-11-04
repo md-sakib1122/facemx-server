@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime
-
+from app.models.locationModel import  Location
 class UserBase(BaseModel):
     name: str
     email: EmailStr
@@ -25,8 +25,8 @@ class UserBase(BaseModel):
     emp_id: Optional[str] = None
     group_id: Optional[str] = None
     company_id: Optional[str] = None
-    lat: Optional[str] = None
-    lon: Optional[str] = None
+    locations: List[Location] = Field(default_factory=list)
+
     #emp base info
 
 class UserCreate(UserBase):

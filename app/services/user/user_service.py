@@ -47,11 +47,13 @@ async def create_user(data: dict):
             "userDept":data.get("userDept"),
             "lon": data.get("lon"),
             "lat": data.get("lat"),
+            "locations" : data.get("locations", []),
+            "radius": data.get("radius"),
             "createdAt": datetime.utcnow(),
             "updatedAt": datetime.utcnow(),
         }
 
-    collection.insert_one(document)
+
     result = await collection.insert_one(document)
 
     return str(result.inserted_id)
