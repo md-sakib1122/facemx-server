@@ -19,7 +19,7 @@ def confirm_verification_token(token: str, expiration=3600):
 
 async def send_verification_email(background_tasks: BackgroundTasks, email: str):
     token = generate_verification_token(email)
-    verify_link = f"{os.getenv("FRONTEND_URL")}/verify-email?token={token}"
+    verify_link = f"{os.getenv('FRONTEND_URL')}/verify-email?token={token}"
 
     message = MessageSchema(
         subject="Verify your Email",

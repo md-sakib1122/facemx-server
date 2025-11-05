@@ -193,3 +193,5 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 async def get_single_user(user_id: str):
     user = await get_user_by_id(user_id)
     return user
+
+
