@@ -14,6 +14,7 @@ from app.services.user.get_single_user_service import get_user_by_id
 from app.services.user.company.delete_department_service import delete_department_service
 from app.services.user.company.delete_subdepartment_service import delete_subdepartment_service
 from app.auth.email_token import send_verification_email ,confirm_verification_token
+from app.services.user.company.delete_company_service import delete_company
 router = APIRouter(tags=["auth"])
 
 
@@ -58,6 +59,21 @@ async def verify_email(token: str = Query(...)):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+
+
+@router.delete("/delete-company/{company_id}")
+async def delete_one_company(company_id: str):
+    try:
+        print(company_id)
+        return await delete_company(company_id)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/signin")
 async def sign_in(data: SignInModel, response: Response):
