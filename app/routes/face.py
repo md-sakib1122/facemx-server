@@ -7,12 +7,14 @@ from app.services.one_to_one import one_to_one
 from app.services.delete_embedding_by_id import delete_embedding_by_id;
 from fastapi import APIRouter, HTTPException
 from app.core.databse import db
-
+from app.liveness.verify import  detect_liveness
 #............
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from datetime import datetime
+import numpy as np
+import cv2
 #............
 
 
@@ -88,22 +90,29 @@ SAVE_DIR = Path("uploaded_faces")
 SAVE_DIR.mkdir(exist_ok=True)
 
 @router.post("/verify-live")
-async def verify_face(image: UploadFile = File(...),company_id: str = Form(...)):
+async def verify_face(image: UploadFile = File(...), company_id: str = Form(...)):
     try:
-        result = await one_to_n(image,company_id)
-        return result
-        # # Generate a unique filename with timestamp
-        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # file_path = SAVE_DIR / f"{timestamp}_{image.filename}"
-        #
-        # # Read uploaded file content
-        # contents = await image.read()
-        # # Save to disk
-        # with open(file_path, "wb") as f:
-        #     f.write(contents)
-        #
-        # print(f"Saved file: {file_path}")  # Optional: for backend log
-        # print("live result--->>",result)
-        # return {"success": result.match, "file_path": str(result.image_path)}
+        # Read file ONCE
+        contents = await image.read()
+        np_img = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        if img is None:
+            print(" img error hit korce")
+            return {"status": "error", "message": "Invalid image file"}
+
+        # Detect liveness (pass numpy img)
+        result_live = await detect_liveness(img)
+
+        if result_live["result"] == "RealFace":
+            # Run recognition
+            print(" liveness result is -->>RealFace")
+            result = await one_to_n(img, company_id)
+            print("1 to N result ->>", result)
+            return result
+        else:
+            print(" liveness result is -->>FakeFace")
+            return {"match": False, "live":False}
+
     except Exception as e:
+        print(" exception hit korce")
         return {"match": False, "error": str(e)}

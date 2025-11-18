@@ -1,6 +1,5 @@
 from fastapi import APIRouter, UploadFile, HTTPException
 import numpy as np
-import cv2
 from app.core.model_loader import face_model  # your preloaded InsightFace model
 from app.core.databse import db  # MongoDB client
 
@@ -13,12 +12,8 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
-async def one_to_n(img1: UploadFile,company_id: str):
+async def one_to_n(img,company_id: str):
     try:
-        # Read image bytes
-        img_bytes = await img1.read()
-        np_img = np.frombuffer(img_bytes, np.uint8)
-        img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
 
         # Detect face and get embedding
         faces = face_model.get(img)
@@ -48,7 +43,7 @@ async def one_to_n(img1: UploadFile,company_id: str):
 
         threshold = 0.6  # typical for InsightFace
         if best_score < threshold:
-            return {"match": False, "score": float(best_score)}
+            return {"match": False, "score": float(best_score), "live":True }
 
         return {
             "match": True,
@@ -56,6 +51,7 @@ async def one_to_n(img1: UploadFile,company_id: str):
             "image_path": best_match.get("image_path"),
             "notes": best_match.get("notes"),
             "score": float(best_score),
+            "live":True
         }
 
     except Exception as e:
