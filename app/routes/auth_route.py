@@ -202,6 +202,7 @@ async def get_all_employee(
 
 @router.get("/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
+    print(current_user)
     return await get_user_by_id(current_user["user_id"])
 
 

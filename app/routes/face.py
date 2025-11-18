@@ -116,3 +116,38 @@ async def verify_face(image: UploadFile = File(...), company_id: str = Form(...)
     except Exception as e:
         print(" exception hit korce")
         return {"match": False, "error": str(e)}
+
+
+
+
+#
+# @router.post("/verify-live")
+# async def verify_face(image: UploadFile = File(...), company_id: str = Form(...)):
+#     response = {"match": False, "live": False, "data": None, "error": None}
+#     try:
+#         contents = await image.read()
+#         np_img = np.frombuffer(contents, np.uint8)
+#         img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+#         if img is None:
+#             response["error"] = "Invalid image file"
+#             return response
+#
+#         result_live = await detect_liveness(img)
+#         if result_live["result"] == "RealFace":
+#             one_to_n_result = await one_to_n(img, company_id)
+#             response.update({
+#                 "match": one_to_n_result.get("match", False),
+#                 "live": True,
+#                 "data": one_to_n_result.get("data")
+#             })
+              #return response
+#         else:
+#             response["live"] = False
+#             return response
+#     except Exception as e:
+#          raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail="Face recognition service temporarily unavailable"
+#         )
+#
+

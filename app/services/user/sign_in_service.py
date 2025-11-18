@@ -1,12 +1,14 @@
 from app.auth.password_utils import verify_password
-
+import os
+from dotenv import load_dotenv
 from app.core.databse import db
 from fastapi import Response
 from passlib.context import CryptContext
 from app.auth.jwt_handler import create_access_token
-
+load_dotenv()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ACCESS_COOKIE_NAME = "access_token"
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "development") == "production"
 
 
 async def sign_in_user(data: dict, response: Response):
@@ -27,9 +29,9 @@ async def sign_in_user(data: dict, response: Response):
         key=ACCESS_COOKIE_NAME,
         value=access_token,
         httponly=True,       # prevents JS access
-        secure=False,
+        secure=IS_PRODUCTION,
         path="/", # True in production with HTTPS
-        samesite="lax",      # adjust if needed
+        samesite="none" if IS_PRODUCTION else "lax",     # adjust if needed
         max_age=24 * 3600    # 1 day in seconds
     )
 
